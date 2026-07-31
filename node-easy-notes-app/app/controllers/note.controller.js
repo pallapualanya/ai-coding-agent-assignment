@@ -26,6 +26,11 @@ exports.create = (req, res) => {
     .then(data => {
         res.send(data);
     }).catch(err => {
+        if (err.code === 11000) {
+            return res.status(400).send({
+                message: "Note with this title already exists."
+            });
+        }
         res.status(500).send({
             message: err.message || "Some error occurred while creating the Note."
         });
@@ -38,8 +43,19 @@ exports.findAll = (req, res) => {
     const limit = req.query.limit || 10;
     const sort = req.query.sort || 'createdAt';
     const order = req.query.order || 'asc';
+    const pinned = req.query.pinned;
+    const archive = req.query.archive;
 
-    Note.find()
+    let query = {};
+
+    if(pinned !== undefined) {
+        query.pinned = pinned;
+    }
+    if(archive !== undefined) {
+        query.archive = archive;
+    }
+
+    Note.find(query)
     .sort({ [sort]: order })
     .skip((page - 1) * limit)
     .limit(limit)
@@ -152,6 +168,24 @@ exports.searchByTag = (req, res) => {
     });
 };
 
+// Search notes by multiple tags
+exports.searchByMultipleTags = (req, res) => {
+    const tags = req.params.tags.split(',');
+    Note.find({ tags: { $in: tags } })
+    .then(notes => {
+        if(!notes || notes.length === 0) {
+            return res.status(404).send({
+                message: "No notes found with tags " + req.params.tags
+            });
+        }
+        res.send(notes);
+    }).catch(err => {
+        return res.status(500).send({
+            message: "Error searching notes with tags " + req.params.tags
+        });
+    });
+};
+
 // Search notes by category
 exports.searchByCategory = (req, res) => {
     Note.find({ category: req.params.category })
@@ -204,7 +238,7 @@ exports.searchByText = (req, res) => {
     });
 };
 
-// Advanced search
+// Advanced search with additional filtering options
 exports.advancedSearch = (req, res) => {
     const title = req.query.title;
     const content = req.query.content;
@@ -215,6 +249,8 @@ exports.advancedSearch = (req, res) => {
     const limit = req.query.limit || 10;
     const sort = req.query.sort || 'createdAt';
     const order = req.query.order || 'asc';
+    const pinned = req.query.pinned;
+    const archive = req.query.archive;
 
     let query = {};
 
@@ -231,7 +267,14 @@ exports.advancedSearch = (req, res) => {
         query.subCategory = subCategory;
     }
     if(tags) {
-        query.tags = tags;
+        const tagsArray = tags.split(',');
+        query.tags = { $in: tagsArray };
+    }
+    if(pinned !== undefined) {
+        query.pinned = pinned;
+    }
+    if(archive !== undefined) {
+        query.archive = archive;
     }
 
     Note.find(query)
@@ -248,6 +291,24 @@ exports.advancedSearch = (req, res) => {
     }).catch(err => {
         return res.status(500).send({
             message: "Error searching notes"
+        });
+    });
+};
+
+// New endpoint: Search notes by multiple categories
+exports.searchByMultipleCategories = (req, res) => {
+    const categories = req.params.categories.split(',');
+    Note.find({ category: { $in: categories } })
+    .then(notes => {
+        if(!notes || notes.length === 0) {
+            return res.status(404).send({
+                message: "No notes found with categories " + req.params.categories
+            });
+        }
+        res.send(notes);
+    }).catch(err => {
+        return res.status(500).send({
+            message: "Error searching notes with categories " + req.params.categories
         });
     });
 };

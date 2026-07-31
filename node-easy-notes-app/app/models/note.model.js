@@ -24,5 +24,6 @@ NoteSchema.index({ tags: 1 });
 NoteSchema.index({ color: 1 });
 NoteSchema.index({ pinned: 1 });
 NoteSchema.index({ archive: 1 });
+NoteSchema.index({ title: 1 }, { unique: true });
 
 module.exports = mongoose.model('Note', NoteSchema);

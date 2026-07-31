@@ -19,6 +19,9 @@ module.exports = (app) => {
     // Search notes by tag
     app.get('/notes/tag/:tag', notes.searchByTag);
 
+    // Search notes by multiple tags
+    app.get('/notes/tags/:tags', notes.searchByMultipleTags);
+
     // Search notes by category
     app.get('/notes/category/:category', notes.searchByCategory);
 
@@ -30,4 +33,7 @@ module.exports = (app) => {
 
     // Advanced search
     app.get('/notes/advanced-search', notes.advancedSearch);
+
+    // New endpoint: Search notes by multiple categories
+    app.get('/notes/categories/:categories', notes.searchByMultipleCategories);
 };
