@@ -1,4 +1,4 @@
-﻿const express = require('express');
+const express = require('express');
 const bodyParser = require('body-parser');
 
 const app = express();
@@ -11,12 +11,16 @@ const mongoose = require('mongoose');
 
 mongoose.Promise = global.Promise;
 
+<<<<<<< HEAD
 const dbUrl = process.env.MONGODB_URI || dbConfig.url;
 
 mongoose.connect(dbUrl, {
     useNewUrlParser: true,
     useUnifiedTopology: true
 }).then(() => {
+=======
+mongoose.connect(dbConfig.url).then(() => {
+>>>>>>> e70d5be (Fix database connection for Mongoose)
     console.log("Successfully connected to the database");    
 }).catch(err => {
     console.log('Could not connect to the database. Exiting now...', err);
