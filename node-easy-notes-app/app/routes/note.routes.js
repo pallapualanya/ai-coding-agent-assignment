@@ -18,4 +18,16 @@ module.exports = (app) => {
 
     // Search notes by tag
     app.get('/notes/tag/:tag', notes.searchByTag);
-}
+
+    // Search notes by category
+    app.get('/notes/category/:category', notes.searchByCategory);
+
+    // Search notes by subCategory
+    app.get('/notes/subcategory/:subCategory', notes.searchBySubCategory);
+
+    // Search notes by content or title
+    app.get('/notes/search/:query', notes.searchByText);
+
+    // Advanced search
+    app.get('/notes/advanced-search', notes.advancedSearch);
+};

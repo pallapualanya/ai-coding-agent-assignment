@@ -13,7 +13,12 @@ exports.create = (req, res) => {
     const note = new Note({
         title: req.body.title || "Untitled Note", 
         content: req.body.content,
-        tags: req.body.tags || []
+        tags: req.body.tags || [],
+        category: req.body.category || "Uncategorized",
+        subCategory: req.body.subCategory || "None",
+        color: req.body.color || "default",
+        pinned: req.body.pinned || false,
+        archive: req.body.archive || false
     });
 
     // Save Note in the database
@@ -29,7 +34,15 @@ exports.create = (req, res) => {
 
 // Retrieve and return all notes from the database.
 exports.findAll = (req, res) => {
+    const page = req.query.page || 1;
+    const limit = req.query.limit || 10;
+    const sort = req.query.sort || 'createdAt';
+    const order = req.query.order || 'asc';
+
     Note.find()
+    .sort({ [sort]: order })
+    .skip((page - 1) * limit)
+    .limit(limit)
     .then(notes => {
         res.send(notes);
     }).catch(err => {
@@ -74,7 +87,12 @@ exports.update = (req, res) => {
     Note.findByIdAndUpdate(req.params.noteId, {
         title: req.body.title || "Untitled Note",
         content: req.body.content,
-        tags: req.body.tags || []
+        tags: req.body.tags || [],
+        category: req.body.category || "Uncategorized",
+        subCategory: req.body.subCategory || "None",
+        color: req.body.color || "default",
+        pinned: req.body.pinned || false,
+        archive: req.body.archive || false
     }, {new: true})
     .then(note => {
         if(!note) {
@@ -130,6 +148,106 @@ exports.searchByTag = (req, res) => {
     }).catch(err => {
         return res.status(500).send({
             message: "Error searching notes with tag " + req.params.tag
+        });
+    });
+};
+
+// Search notes by category
+exports.searchByCategory = (req, res) => {
+    Note.find({ category: req.params.category })
+    .then(notes => {
+        if(!notes || notes.length === 0) {
+            return res.status(404).send({
+                message: "No notes found with category " + req.params.category
+            });
+        }
+        res.send(notes);
+    }).catch(err => {
+        return res.status(500).send({
+            message: "Error searching notes with category " + req.params.category
+        });
+    });
+};
+
+// Search notes by subCategory
+exports.searchBySubCategory = (req, res) => {
+    Note.find({ subCategory: req.params.subCategory })
+    .then(notes => {
+        if(!notes || notes.length === 0) {
+            return res.status(404).send({
+                message: "No notes found with subCategory " + req.params.subCategory
+            });
+        }
+        res.send(notes);
+    }).catch(err => {
+        return res.status(500).send({
+            message: "Error searching notes with subCategory " + req.params.subCategory
+        });
+    });
+};
+
+// Search notes by content or title
+exports.searchByText = (req, res) => {
+    const searchQuery = req.params.query;
+    Note.find({ $or: [{ title: { $regex: searchQuery, $options: 'i' }}, { content: { $regex: searchQuery, $options: 'i' }}] })
+    .then(notes => {
+        if(!notes || notes.length === 0) {
+            return res.status(404).send({
+                message: "No notes found matching query " + searchQuery
+            });
+        }
+        res.send(notes);
+    }).catch(err => {
+        return res.status(500).send({
+            message: "Error searching notes with query " + searchQuery
+        });
+    });
+};
+
+// Advanced search
+exports.advancedSearch = (req, res) => {
+    const title = req.query.title;
+    const content = req.query.content;
+    const category = req.query.category;
+    const subCategory = req.query.subCategory;
+    const tags = req.query.tags;
+    const page = req.query.page || 1;
+    const limit = req.query.limit || 10;
+    const sort = req.query.sort || 'createdAt';
+    const order = req.query.order || 'asc';
+
+    let query = {};
+
+    if(title) {
+        query.title = { $regex: title, $options: 'i' };
+    }
+    if(content) {
+        query.content = { $regex: content, $options: 'i' };
+    }
+    if(category) {
+        query.category = category;
+    }
+    if(subCategory) {
+        query.subCategory = subCategory;
+    }
+    if(tags) {
+        query.tags = tags;
+    }
+
+    Note.find(query)
+    .sort({ [sort]: order })
+    .skip((page - 1) * limit)
+    .limit(limit)
+    .then(notes => {
+        if(!notes || notes.length === 0) {
+            return res.status(404).send({
+                message: "No notes found matching query"
+            });
+        }
+        res.send(notes);
+    }).catch(err => {
+        return res.status(500).send({
+            message: "Error searching notes"
         });
     });
 };
